@@ -9,6 +9,6 @@ import os
 
 # Run new tool
 os.makedirs("new_search", exist_ok=True)
-search("./datasets/Apache.csv",100,"new_search")
+search("./datasets/x264.csv",100,"new_search")
 
 # compare results

@@ -43,10 +43,6 @@ def search(file_path, budget, output_file):
     best_performance = -np.inf if maximization else np.inf
     best_solution = []
 
-    # Store all search results
-    search_results = []
-
-
     #
     # Actually search
     #
@@ -60,26 +56,12 @@ def search(file_path, budget, output_file):
         sampled_config[col] = column_config
 
     # For each configuration, check it exists in the dataset
-    for index, sample in sampled_config.iterrows():
-        # Create a Pandas Series from the sampled configuration and match it against all rows in the dataset
-        # The .all(axis=1) ensures that the match is applied across all configuration columns
-        matched_row = data.loc[(data[config_columns] == sample).all(axis=1)]
 
-        # if exists, add performance to performance column
-        if not matched_row.empty:
-            performance = matched_row[performance_column].iloc[0]
-            sample = np.append(sample.to_numpy(), [performance])
-        # if doesn't exist, give it the worst performance
-        else:
-            performance = worst_value
-            sample = np.append(sample.to_numpy(), [performance])
-
-        search_results.append(sample)
-
+    search_results = add_performance(data, config_columns, performance_column, sampled_config, worst_value)
 
     # Select top 10% of performers
     # Convert search results to a sorted dataframe (ascending for minimisation)
-    search_results = pd.DataFrame(search_results, columns=data.columns).sort_values(by=['performance'], ascending=not maximization).head(math.floor(len(search_results) * SEARCH_BUDGET))
+    search_results = pd.DataFrame(search_results, columns=data.columns).sort_values(by=performance_column, ascending=not maximization).head(math.floor(len(search_results) * SEARCH_BUDGET))
     #print(search_results)
     # Collect distribution, and create new configurations using np.random.choice(p=[?, ?, ?, ?]) (this creates randomly with the same distribution as top performers)
     # Creates new columns one-by-one to be stitched together
@@ -96,10 +78,20 @@ def search(file_path, budget, output_file):
     #print(search_config)
 
     # get performance values
+    search_results_2 = add_performance(data, config_columns, performance_column, sampled_config, worst_value)
+    search_results_2 = pd.DataFrame(search_results_2, columns=data.columns).sort_values(by=performance_column, ascending=not maximization)
+    
+    print(search_results)
+    print(search_results_2)
+    
+    # evaluate results
 
-    search_results_2 = []
-    # For each configuration, check it exists in the dataset
-    for index, sample in search_config.iterrows():
+    return 0
+
+
+def add_performance(data, config_columns, performance_column, sampled_config, worst_value):
+    search_results = []
+    for index, sample in sampled_config.iterrows():
         # Create a Pandas Series from the sampled configuration and match it against all rows in the dataset
         # The .all(axis=1) ensures that the match is applied across all configuration columns
         matched_row = data.loc[(data[config_columns] == sample).all(axis=1)]
@@ -113,12 +105,5 @@ def search(file_path, budget, output_file):
             performance = worst_value
             sample = np.append(sample.to_numpy(), [performance])
 
-        search_results_2.append(sample)
-    search_results_2 = pd.DataFrame(search_results_2, columns=data.columns).sort_values(by=['performance'], ascending=not maximization)
-    
-    print(search_results)
-    print(search_results_2)
-    
-    # evaluate results
-
-    return 0
+        search_results.append(sample)
+    return search_results
