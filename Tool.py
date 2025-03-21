@@ -43,9 +43,9 @@ def search(file_path, budget, output_file):
     best_performance = -np.inf if maximization else np.inf
     best_solution = []
 
-    #
-    # Actually search
-    #
+    ###################
+    # Actually search #
+    ###################
 
     # Create first samples, sampled_config is a batch of configurations
     sampled_config = pd.DataFrame()
@@ -55,14 +55,14 @@ def search(file_path, budget, output_file):
         random.shuffle(column_config)
         sampled_config[col] = column_config
 
-    # For each configuration, check it exists in the dataset
+    # Add the performance values to the sample
 
     search_results = add_performance(data, config_columns, performance_column, sampled_config, worst_value)
 
     # Select top 10% of performers
     # Convert search results to a sorted dataframe (ascending for minimisation)
     search_results = pd.DataFrame(search_results, columns=data.columns).sort_values(by=performance_column, ascending=not maximization).head(math.floor(len(search_results) * SEARCH_BUDGET))
-    #print(search_results)
+    
     # Collect distribution, and create new configurations using np.random.choice(p=[?, ?, ?, ?]) (this creates randomly with the same distribution as top performers)
     # Creates new columns one-by-one to be stitched together
     search_config = pd.DataFrame()
@@ -71,11 +71,7 @@ def search(file_path, budget, output_file):
         for val in sorted(search_results[col].unique()):
             distribution.append(search_results[col].value_counts().get(val, 0) / len(search_results))
         # Creates a new column with values matching the same distribution as the first sample
-        column_new = np.random.choice(sorted(search_results[col].unique()), int(budget * REMAINING_BUDGET), p=distribution)
-        #print(column_new)
-        search_config[col] = column_new
-    
-    #print(search_config)
+        search_config[col] = np.random.choice(sorted(search_results[col].unique()), int(budget * REMAINING_BUDGET), p=distribution)
 
     # get performance values
     search_results_2 = add_performance(data, config_columns, performance_column, sampled_config, worst_value)
@@ -84,9 +80,16 @@ def search(file_path, budget, output_file):
     print(search_results)
     print(search_results_2)
     
-    # evaluate results
+    # export results to csv
 
-    return 0
+    #search_results = pd.concat(search_results_2)
+    results = pd.concat([search_results, search_results_2])
+
+    print(results)
+
+    results.to_csv(output_file, index=False)
+
+    return
 
 
 def add_performance(data, config_columns, performance_column, sampled_config, worst_value):
