@@ -77,19 +77,26 @@ def search(file_path, budget, output_file):
     search_results_2 = add_performance(data, config_columns, performance_column, sampled_config, worst_value)
     search_results_2 = pd.DataFrame(search_results_2, columns=data.columns).sort_values(by=performance_column, ascending=not maximization)
     
-    print(search_results)
-    print(search_results_2)
+    #print(search_results)
+    #print(search_results_2)
     
     # export results to csv
 
     #search_results = pd.concat(search_results_2)
-    results = pd.concat([search_results, search_results_2])
+    results = pd.concat([search_results, search_results_2]).sort_values(by=performance_column, ascending=not maximization)
 
-    print(results)
+    #print(results)
 
     results.to_csv(output_file, index=False)
 
-    return
+    if maximization:
+        best_solution = results.iloc[0].to_numpy()
+    if not maximization:
+        best_solution = results.iloc[0].to_numpy()
+
+    best_performance = best_solution[-1]
+
+    return [int(x) for x in best_solution], best_performance
 
 
 def add_performance(data, config_columns, performance_column, sampled_config, worst_value):
