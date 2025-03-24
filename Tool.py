@@ -5,20 +5,22 @@ import random
 import matplotlib.pyplot as plt
 import math
 
+# Suppress pandas deprecation warnings
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 # Remove scientific notation e.g. 3.487e+03, easier for testing
 np.set_printoptions(suppress=True)
 
-#
-# Hyperparameters
-#
-# Percentage used in step 1
-SAMPLE_BUDGET = 0.5
-# Percentage of configurations kept for step 2
-SEARCH_BUDGET = 0.1
-# Remaining budget to be used in step 2
-REMAINING_BUDGET = 1 - SAMPLE_BUDGET
-
 def search(file_path, budget, output_file):
+
+    # Hyperparameters
+    # Percentage used in step 1
+    SAMPLE_BUDGET = 0.5 * budget
+
+    # Remaining budget to be used in step 2
+    REMAINING_BUDGET = budget - SAMPLE_BUDGET
+
     # Load the dataset
     data = pd.read_csv(file_path)
 
@@ -51,7 +53,7 @@ def search(file_path, budget, output_file):
     sampled_config = pd.DataFrame()
     for col in config_columns:
         # start with a uniformly random spread using 50% of the budget
-        column_config = np.random.choice(data[col].unique(), int(budget * SAMPLE_BUDGET))
+        column_config = np.random.choice(data[col].unique(), int(SAMPLE_BUDGET))
         random.shuffle(column_config)
         sampled_config[col] = column_config
 
@@ -59,46 +61,41 @@ def search(file_path, budget, output_file):
 
     search_results = add_performance(data, config_columns, performance_column, sampled_config, worst_value)
 
-    # Select top 10% of performers
     # Convert search results to a sorted dataframe (ascending for minimisation)
-    search_results = pd.DataFrame(search_results, columns=data.columns).sort_values(by=performance_column, ascending=not maximization).head(math.floor(len(search_results) * SEARCH_BUDGET))
-    
-    # Collect distribution, and create new configurations using np.random.choice(p=[?, ?, ?, ?]) (this creates randomly with the same distribution as top performers)
-    # Creates new columns one-by-one to be stitched together
-    search_config = pd.DataFrame()
-    for col in config_columns:
-        distribution = []
-        for val in sorted(search_results[col].unique()):
-            distribution.append(search_results[col].value_counts().get(val, 0) / len(search_results))
-        # Creates a new column with values matching the same distribution as the first sample
-        search_config[col] = np.random.choice(sorted(search_results[col].unique()), int(budget * REMAINING_BUDGET), p=distribution)
+    search_results = pd.DataFrame(search_results, columns=data.columns).sort_values(by=performance_column, ascending=not maximization)
 
-    # get performance values
-    search_results_2 = add_performance(data, config_columns, performance_column, sampled_config, worst_value)
+    # Assign a distribution to the initial sample and use this to generate a new sample
+    search_config = pd.DataFrame()
+    distribution = [0.6, 0.25, 0.1, 0.05]
+    distribution = np.repeat(distribution, SAMPLE_BUDGET/len(distribution))/int(SAMPLE_BUDGET/len(distribution))
+    distribution = np.pad(distribution, (0, int(SAMPLE_BUDGET) % len(distribution)), 'constant')
+    for col in config_columns:
+        search_config[col] = random.shuffle(np.random.choice(search_results[col], int(REMAINING_BUDGET), p=distribution))
+
+    # Get performance values
+    search_results_2 = add_performance(data, config_columns, performance_column, search_config, worst_value)
     search_results_2 = pd.DataFrame(search_results_2, columns=data.columns).sort_values(by=performance_column, ascending=not maximization)
     
     #print(search_results)
     #print(search_results_2)
     
-    # export results to csv
-
-    #search_results = pd.concat(search_results_2)
+    # Export results to csv (combine search_results and search_results_2)
     results = pd.concat([search_results, search_results_2]).sort_values(by=performance_column, ascending=not maximization)
-
-    #print(results)
-
     results.to_csv(output_file, index=False)
 
+    # Get best solution
     if maximization:
         best_solution = results.iloc[0].to_numpy()
     if not maximization:
         best_solution = results.iloc[0].to_numpy()
 
+    # Get best performance score
     best_performance = best_solution[-1]
 
     return [int(x) for x in best_solution], best_performance
 
 
+# This method gets the performance values from the dataset and appends it to the given samples 
 def add_performance(data, config_columns, performance_column, sampled_config, worst_value):
     search_results = []
     for index, sample in sampled_config.iterrows():

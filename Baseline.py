@@ -69,7 +69,7 @@ def random_search(file_path, budget, output_file):
 
     # Save the search results to a CSV file
     columns = list(config_columns) + ["Performance"]
-    search_df = pd.DataFrame(search_results, columns=columns)
+    search_df = pd.DataFrame(search_results, columns=columns).sort_values(by="Performance", ascending=not maximization)
     search_df.to_csv(output_file, index=False)
 
     return [int(x) for x in best_solution], best_performance
