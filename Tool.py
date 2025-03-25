@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import math
 
 # Suppress pandas deprecation warnings
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+#import warnings
+#warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Remove scientific notation e.g. 3.487e+03, easier for testing
 np.set_printoptions(suppress=True)
@@ -70,17 +70,17 @@ def search(file_path, budget, output_file):
     distribution = np.repeat(distribution, SAMPLE_BUDGET/len(distribution))/int(SAMPLE_BUDGET/len(distribution))
     distribution = np.pad(distribution, (0, int(SAMPLE_BUDGET) % len(distribution)), 'constant')
     for col in config_columns:
-        search_config[col] = random.shuffle(np.random.choice(search_results[col], int(REMAINING_BUDGET), p=distribution))
+        #search_config[col] = random.shuffle(np.random.choice(search_results[col], int(REMAINING_BUDGET), p=distribution))
+        search_config[col] = np.random.choice(search_results[col], int(REMAINING_BUDGET), p=distribution)
+        random.shuffle(search_config[col])
 
     # Get performance values
     search_results_2 = add_performance(data, config_columns, performance_column, search_config, worst_value)
     search_results_2 = pd.DataFrame(search_results_2, columns=data.columns).sort_values(by=performance_column, ascending=not maximization)
     
-    #print(search_results)
-    #print(search_results_2)
-    
     # Export results to csv (combine search_results and search_results_2)
-    results = pd.concat([search_results, search_results_2]).sort_values(by=performance_column, ascending=not maximization)
+    results = pd.concat([search_results, search_results_2], ignore_index=True)
+    results = results.sort_values(by=performance_column, ascending=not maximization)
     results.to_csv(output_file, index=False)
 
     # Get best solution
@@ -92,7 +92,7 @@ def search(file_path, budget, output_file):
     # Get best performance score
     best_performance = best_solution[-1]
 
-    return [int(x) for x in best_solution], best_performance
+    return [int(x) for x in best_solution[:-1]], best_performance
 
 
 # This method gets the performance values from the dataset and appends it to the given samples 
