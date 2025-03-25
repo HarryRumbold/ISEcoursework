@@ -5,21 +5,26 @@ import random
 import matplotlib.pyplot as plt
 import math
 
-# Suppress pandas deprecation warnings
-#import warnings
-#warnings.simplefilter(action='ignore', category=FutureWarning)
-
 # Remove scientific notation e.g. 3.487e+03, easier for testing
 np.set_printoptions(suppress=True)
 
 def search(file_path, budget, output_file):
+    #######################
+    # Constant Parameters #
+    #######################
 
-    # Hyperparameters
     # Percentage used in step 1
     SAMPLE_BUDGET = 0.5 * budget
 
     # Remaining budget to be used in step 2
     REMAINING_BUDGET = budget - SAMPLE_BUDGET
+
+    # Probabilities applied to the first sample to dictate the second sample
+    DISTRIBUTION = [0.6, 0.25, 0.1, 0.05]
+
+    #########################################
+    # Load Dataset and Initialise Variables #
+    #########################################
 
     # Load the dataset
     data = pd.read_csv(file_path)
@@ -66,11 +71,9 @@ def search(file_path, budget, output_file):
 
     # Assign a distribution to the initial sample and use this to generate a new sample
     search_config = pd.DataFrame()
-    distribution = [0.6, 0.25, 0.1, 0.05]
-    distribution = np.repeat(distribution, SAMPLE_BUDGET/len(distribution))/int(SAMPLE_BUDGET/len(distribution))
+    distribution = np.repeat(DISTRIBUTION, SAMPLE_BUDGET/len(DISTRIBUTION))/int(SAMPLE_BUDGET/len(DISTRIBUTION))
     distribution = np.pad(distribution, (0, int(SAMPLE_BUDGET) % len(distribution)), 'constant')
     for col in config_columns:
-        #search_config[col] = random.shuffle(np.random.choice(search_results[col], int(REMAINING_BUDGET), p=distribution))
         search_config[col] = np.random.choice(search_results[col], int(REMAINING_BUDGET), p=distribution)
         random.shuffle(search_config[col])
 

@@ -47,6 +47,7 @@ if(userInput == 'n'):
     filelist_dict = { ind: name for (ind,name) in enumerate(filelist) }
 
     # Display files in the dataset file
+    print("Select a dataset:")
     for idx, file in filelist_dict.items():
         print(f"[{idx}] {file}")
 
