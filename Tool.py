@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import os
 import random
-import matplotlib.pyplot as plt
-import math
 
 # Remove scientific notation e.g. 3.487e+03, easier for testing
 np.set_printoptions(suppress=True)
