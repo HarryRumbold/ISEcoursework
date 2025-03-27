@@ -73,31 +73,3 @@ def random_search(file_path, budget, output_file):
     search_df.to_csv(output_file, index=False)
 
     return [int(x) for x in best_solution], best_performance
-
-
-# Main function to test on multiple datasets
-def main():
-    datasets_folder = "datasets"
-    output_folder = "search_results"
-    os.makedirs(output_folder, exist_ok=True)
-    budget = 100
-
-    results = {}
-    for file_name in os.listdir(datasets_folder):
-        if file_name.endswith(".csv"):
-            file_path = os.path.join(datasets_folder, file_name)
-            output_file = os.path.join(output_folder, f"{file_name.split('.')[0]}_search_results.csv")
-            best_solution, best_performance = random_search(file_path, budget, output_file)
-            results[file_name] = {
-                "Best Solution": best_solution,
-                "Best Performance": best_performance
-            }
-
-    # Print the results
-    for system, result in results.items():
-        print(f"System: {system}")
-        print(f"  Best Solution:    [{', '.join(map(str, result['Best Solution']))}]")
-        print(f"  Best Performance: {result['Best Performance']}")
-
-if __name__ == "__main__":
-    main()
