@@ -162,13 +162,16 @@ if(userInput == 'y'):
         # Compare results
         print(Fore.YELLOW + '-' * 8, f"Run {i+1}", '-' * 8)
         for file_name in os.listdir(datasets_folder):
-            if(tool_results[file_name]['Best Performance'] <= baseline_results[file_name]['Best Performance']):
-                print(Fore.GREEN + f"System: {file_name}")
+            if(tool_results[file_name]['Best Performance'] < baseline_results[file_name]['Best Performance']):
+                print(Fore.GREEN +  f"System: {file_name}")
                 tool = tool + 1
                 file_results[file_name] = file_results[file_name] + 1
-            else:
-                print(Fore.RED +   f"System: {file_name}")
+            if(tool_results[file_name]['Best Performance'] > baseline_results[file_name]['Best Performance']):
+                print(Fore.RED +    f"System: {file_name}")
                 baseline = baseline + 1
+            if(tool_results[file_name]['Best Performance'] == baseline_results[file_name]['Best Performance']):
+                print(Fore.YELLOW + f"System: {file_name}")
+                file_results[file_name] = file_results[file_name] + 1
             print(Fore.RESET +     f"    Baseline: {baseline_results[file_name]['Best Performance']}")
             print(                 f"    Tool:     {tool_results[file_name]['Best Performance']}")
 
@@ -182,10 +185,14 @@ if(userInput == 'y'):
         #        print(csv.iloc[:,-1:].sum().iloc[0])
         #        print(csv2.iloc[:,-1:].sum().iloc[0])
 
+    total_tests = no_of_tests * len(file_results)
 
     print(Fore.YELLOW + f"-- Results over {str(no_of_tests).ljust(2)} runs --")
-    print(Fore.RESET + f"Baseline  {baseline:>16}")
-    print(f"Tool      {tool:>16}")
+    print(Fore.RESET + f"Baseline  {baseline:>10}/{total_tests}")
+    print(f"Tool      {tool:>10}/{total_tests}")
+    print(f"Tied      {total_tests - tool - baseline:>10}/{total_tests}")
+    print('-' * 26)
+    print(f"Tool + Tied {total_tests - baseline:>8}/{total_tests}")
     print('-' * 26)
     for file in file_results:
         print(f"{file:<15} {file_results[file]:>10}")
